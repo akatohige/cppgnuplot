@@ -40,9 +40,14 @@ public:
 		m_file = std::shared_ptr<FILE>(_popen((_path + " -persist").c_str(), "w"), _pclose);
 	}
 
-	void save()
+	void save_to_png(const std::string& _path, size_t _width, size_t _height) const
 	{
-
+		fprintf(m_file.get(), "set terminal png size %zd,%zd transparent truecolor\n", _width, _height);
+		fprintf(m_file.get(), "set output '%s\n", _path.c_str());
+		fprintf(m_file.get(), "replot\n");
+		fprintf(m_file.get(), "set terminal windows\n");
+		fprintf(m_file.get(), "set output\n");
+		flush();
 	}
 
 	void close()
@@ -104,6 +109,11 @@ public:
 		command("set multiplot");
 	}
 
+	void nomultiplot() const
+	{
+		command("set nomultiplot");
+	}
+
 	void style(const gnuplot::style& _style)
 	{
 		fprintf(m_file.get(), "set style function %s\n", get_style_name(_style).c_str());
@@ -113,7 +123,7 @@ public:
 
 	void line_width(size_t _width)
 	{
-		fprintf(m_file.get(), "set linetype 1 lw %d\n", _width);
+		fprintf(m_file.get(), "set linetype 1 lw %zd\n", _width);
 		flush();
 	}
 
