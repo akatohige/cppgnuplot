@@ -24,7 +24,7 @@ enum class style
 	filled_curves_closed,
 };
 
-using plot = std::vector<double>;
+using values = std::vector<double>;
 
 class graph final
 {
@@ -99,6 +99,18 @@ public:
 		flush();
 	}
 
+	void z_range(double _minimum, double _maximum) const
+	{
+		fprintf(m_file.get(), "set zrange [%lf:%lf]\n", _minimum, _maximum);
+		flush();
+	}
+
+	void colorbar_range(double _minimum, double _maximum) const
+	{
+		fprintf(m_file.get(), "set cbrange [%lf:%lf]\n", _minimum, _maximum);
+		flush();
+	}
+
 	void autoscale() const
 	{
 		command("set autoscale");
@@ -145,10 +157,10 @@ public:
 		flush();
 	}
 
-	void plot(const plot& _x, const plot& _y)
+	void plot(const values& _x, const values& _y)
 	{
-		plot::const_iterator x_itr = _x.begin();
-		plot::const_iterator y_itr = _y.begin();
+		values::const_iterator x_itr = _x.begin();
+		values::const_iterator y_itr = _y.begin();
 
 		fprintf(m_file.get(), "plot '-'\n");
 
@@ -159,6 +171,58 @@ public:
 			y_itr++;
 		}
 		command("e");
+	}
+	
+	void plot(const values& _x, const values& _y, const values& _z)
+	{
+		values::const_iterator x_itr = _x.begin();
+		values::const_iterator y_itr = _y.begin();
+		values::const_iterator z_itr = _z.begin();
+
+		fprintf(m_file.get(), "splot '-'\n");
+
+		double prev_value;
+		while (x_itr != _x.end() && y_itr != _y.end() && z_itr != _z.end())
+		{
+			fprintf(m_file.get(), "%lf %lf %lf\n", *x_itr, *y_itr, *z_itr);
+			
+			prev_value = *x_itr;
+			x_itr++;
+			y_itr++;
+			z_itr++;
+
+			if (prev_value != *x_itr)
+			{
+				fprintf(m_file.get(), "\n");
+			}
+		}
+		command("e");
+	}
+
+	void plot_colormap(const values& _x, const values& _y, const values& _z)
+	{
+		values::const_iterator x_itr = _x.begin();
+		values::const_iterator y_itr = _y.begin();
+		values::const_iterator z_itr = _z.begin();
+
+		fprintf(m_file.get(), "splot '-'\n");
+
+		double prev_value = *y_itr;
+		while (x_itr != _x.end() && y_itr != _y.end() && z_itr != _z.end())
+		{
+			if (prev_value != *y_itr)
+			{
+				fprintf(m_file.get(), "\n");
+			}
+
+			fprintf(m_file.get(), "%lf %lf %lf\n", *x_itr, *y_itr, *z_itr);
+			prev_value = *y_itr;
+
+			x_itr++;
+			y_itr++;
+			z_itr++;
+		}
+		command("e with pm3d");
 	}
 
 	bool is_opened() const
@@ -172,16 +236,16 @@ public:
 		{
 			"lines",
 			"points",
-			"lines_points",
+			"linespoints",
 			"impulses",
 			"dots",
 			"steps",
 			"fsteps",
 			"histeps",
 			"boxes",
-			"filled_curves_x1",
-			"filled_curves_y1",
-			"filled_curves_closed",
+			"filledcurvesx1",
+			"filledcurvesy1",
+			"filledcurvesclosed",
 		};
 		return style_names[static_cast<size_t>(_style)];
 	}
